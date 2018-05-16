@@ -1,20 +1,20 @@
-import subprocess
-import re
-from flask import Flask, request, render_template
-
-import json
-import logging
 import os
+import re
+import json
 import signal
-from datetime import datetime
+import logging
+import subprocess
+
+from copy import copy
 from pathlib import Path
 from textwrap import wrap
-# from time import sleep
-from copy import copy
+from datetime import datetime
 
-from dnslib import DNSLabel, QTYPE, RR, dns
-from dnslib.proxy import ProxyResolver
 from dnslib.server import DNSServer
+from dnslib.proxy import ProxyResolver
+from dnslib import DNSLabel, QTYPE, RR, dns
+from flask import Flask, request, render_template
+
 
 SERIAL_NO = int((datetime.utcnow() - datetime(1970, 1, 1)).total_seconds())
 
