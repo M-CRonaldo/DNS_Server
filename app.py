@@ -13,6 +13,7 @@ from datetime import datetime
 from dnslib.server import DNSServer
 from dnslib.proxy import ProxyResolver
 from dnslib import DNSLabel, QTYPE, RR, dns
+from dnslib import DNSRecord, DNSQuestion
 from flask import Flask, request, render_template
 
 
@@ -164,21 +165,44 @@ def handle_sig(signum, frame):
 app = Flask(__name__)
 
 
+class DNSError(Exception):
+    pass
+
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'GET' and 'site' in request.values and 'type' in request.values:
-        query_site = request.values.get('site')
+        query_domain = request.values.get('site')
         query_type = request.values.get('type').upper()
-        out, err = subprocess.Popen(['python', '-m', 'dnslib.client', '-s', '0.0.0.0:5053', query_site, query_type],
-                                    stdout=subprocess.PIPE).communicate()
-        out = out.decode('utf-8')
+        address = '0.0.0.0'
+        port = 5053
+        from dnslib.bimap import Bimap
+        QTYPE = Bimap('QTYPE',
+                      {1: 'A', 2: 'NS', 5: 'CNAME', 6: 'SOA', 12: 'PTR', 15: 'MX',
+                       16: 'TXT', 17: 'RP', 18: 'AFSDB', 24: 'SIG', 25: 'KEY', 28: 'AAAA',
+                       29: 'LOC', 33: 'SRV', 35: 'NAPTR', 36: 'KX', 37: 'CERT', 38: 'A6',
+                       39: 'DNAME', 41: 'OPT', 42: 'APL', 43: 'DS', 44: 'SSHFP',
+                       45: 'IPSECKEY', 46: 'RRSIG', 47: 'NSEC', 48: 'DNSKEY', 49: 'DHCID',
+                       50: 'NSEC3', 51: 'NSEC3PARAM', 52: 'TLSA', 55: 'HIP', 99: 'SPF',
+                       249: 'TKEY', 250: 'TSIG', 251: 'IXFR', 252: 'AXFR', 255: 'ANY',
+                       257: 'CAA', 32768: 'TA', 32769: 'DLV'},
+                      DNSError)
+        q = DNSRecord(q=DNSQuestion(query_domain, getattr(QTYPE, query_type)))
+        a_pkt = q.send(address, port, tcp=False)
+        a = DNSRecord.parse(a_pkt)
+        if a.header.tc:
+            # Truncated - retry in TCP mode
+            a_pkt = q.send(address, port, tcp=True)
+            a = DNSRecord.parse(a_pkt)
+        out = str(a)
         pattern = re.compile(r";; ANSWER SECTION:\n(.*)", re.DOTALL)
         out = pattern.findall(out)
-        if out == []:
+        if out:
+            lines = out[0].splitlines()
+            return render_template('output.html', lines=lines)
+        else:
             not_found = ['No answer section']
             return render_template('output.html', lines=not_found)
-        lines = out[0].splitlines()
-        return render_template('output.html', lines=lines)
     return render_template('index.html')
 
 
