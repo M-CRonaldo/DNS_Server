@@ -1,6 +1,0 @@
-example.com.            300     IN      A       1.2.3.4
-example.com.            300     IN      A       1.2.3.4
-example.com.            300     IN      A       1.2.3.4
-google.com.             214     IN      A       172.217.160.110
-baidu.com.              383     IN      A       123.125.115.110
-baidu.com.              383     IN      A       220.181.57.216
