@@ -10,6 +10,13 @@
     <script src="static/js/jquery-3.1.1.js"></script>
 </head>
 
+{% for line in result %}
+<script type="text/javascript">
+    var list = {{ line|tojson }};
+    alert(list);
+</script>
+{% endfor %}
+
 <body>
     <h1>DNS Query</h1>
     <div class="login-01">
@@ -33,6 +40,18 @@
                             <option value="txt">TXT</option>
                         </select>
                     </div>
+                    <div class="styled-select">
+                        <select name="mode">
+                            <option value="recur">递归</option>
+                            <option value="iter">迭代</option>
+                        </select>
+                    </div>
+                    <div class="styled-select">
+                        <select name="history">
+                            <option value="false">不显示记录缓存</option>
+                            <option value="true">显示记录缓存</option>
+                        </select>
+                    </div>
                     <div class="clear"></div>
                 </li>
             </ul>
@@ -42,7 +61,9 @@
     </div>
     <div class="copy-right">
         <div class="wrap">
-            <p>Copyright © 2018. DCGZ All right reserved.</p>
+            {% for line in lines %}
+                <p>{{ line|safe }}</p>
+            {% endfor %}
         </div>
     </div>
 

@@ -9,7 +9,6 @@ and exits.
 """
 import struct
 import socket
-import sys
 
 ROOT_SERVERS = ("198.41.0.4",
                 "192.228.79.201",
@@ -25,20 +24,10 @@ ROOT_SERVERS = ("198.41.0.4",
                 "199.7.83.42",
                 "202.12.27.33")
 
-def main():
+def iter_query(ip_req):
     # Get command line arguments
-    args = sys.argv[1:]
     specs = []
-
-    if len(args) == 1:
-        ip_req = args[0]
-        specs.append(ip_req)
-
-    if len(args) == 2:
-        opCode = args[0]
-        ip_req = args[1]
-        specs.append(ip_req)
-        specs.append(opCode)
+    specs.append(ip_req)
 
     # Get the root servers and their respective IP addresses
     fp = open("root-servers.txt", "r")
@@ -55,7 +44,8 @@ def main():
     # Send the query
     ip_address = sendReceive(sock, port, query, root_servers, root_servers)
 
-    print("The name", ip_req, "resolves to:",ip_address)
+    print("The name", ip_req, "resolves to:",ip_address, file=open('iter.txt', 'a+'))
+    print("The name", ip_req, "resolves to:", ip_address, file=open('tmp.txt', 'a+'))
 
 def sendReceive(s, port_num, question, server_list, root_servers):
     """
@@ -76,7 +66,8 @@ def sendReceive(s, port_num, question, server_list, root_servers):
         try:
             DNS_IP = ip_address
             sock.sendto(query, (DNS_IP, port))
-            print("Querying server", ip_address)
+            print("Querying server", ip_address, file=open('iter.txt', 'a+'))
+            print("Querying server", ip_address, file=open('tmp.txt', 'a+'))
             message = sock.recvfrom(1024)
             new_server_list, flag = decodeMes(message)
 
@@ -92,7 +83,8 @@ def sendReceive(s, port_num, question, server_list, root_servers):
                 return sendReceive(sock, port, query, new_server_list, root_servers)
 
             elif flag == 3:
-                print("SOA: No such domain name")
+                print("SOA: No such domain name", file=open('iter.txt', 'a+'))
+                print("SOA: No such domain name", file=open('tmp.txt', 'a+'))
                 exit(1)
 
             elif flag == 4:
@@ -114,7 +106,8 @@ def sendReceive(s, port_num, question, server_list, root_servers):
                 return sendReceive(sock, port, query, new_server_list2, root_servers)
 
         except socket.timeout as e:
-            print('Exception:', e)
+            print('Exception:' + str(e), file=open('iter.txt', 'a+'))
+            print('Exception:' + str(e), file=open('tmp.txt', 'a+'))
         except socket.gaierror:
             pass
 
@@ -156,13 +149,11 @@ def decodeName(message, index):
         return: a tuple, where the first index is the name and the second index
                         is the current index in the DNS message
     """
-    print(type(message[index]))
-    print(message[index])
-    count, = struct.unpack("!B", b'\x03')
+    count, = struct.unpack("!B", bytes([message[index]]))
     index+=1
 
     if ((count & 0xc0) == 192):
-        pointer, = struct.unpack('!B', message[index])
+        pointer, = struct.unpack('!B', bytes([message[index]]))
         index+=1
         tup = decodeName(message, pointer)
         name = tup[0]
@@ -172,18 +163,22 @@ def decodeName(message, index):
         name = ""
         while count != 0:
             for i in range(count):
-                temp_tup = struct.unpack('!s', str(message[index]).encode('utf-8'))
+                temp_tup = struct.unpack('!s', bytes([message[index]]))
                 temp = temp_tup[0]
-                name = name + temp
+                try:
+                    name = name + temp.decode('utf-8')
+                except UnicodeDecodeError:
+                    print('connection error', file=open('iter.txt', 'a+'))
+                    print('connection error', file=open('tmp.txt', 'a+'))
                 index+=1
 
-                byte, = struct.unpack("!B", message[index])
+                byte, = struct.unpack("!B", bytes([message[index]]))
 
                 # Check to see if a pointer starts within a string
                 if ((byte & 0xc0) == 192):
                     name = name + "."
                     index+=1
-                    pointer2, = struct.unpack('!B', message[index])
+                    pointer2, = struct.unpack('!B', bytes([message[index]]))
                     index+=1
                     tup = decodeName(message, pointer2)
                     name = name + tup[0]
@@ -191,7 +186,7 @@ def decodeName(message, index):
 
 
             name = name + '.'
-            count, = struct.unpack('!B', message[index])
+            count, = struct.unpack('!B', bytes([message[index]]))
             index+=1
 
         # Deleted the extra '.' at end of string
@@ -213,7 +208,8 @@ def decodeMes(message):
     hid, flags, QDCount, ANCount, NSCount, ARCount = struct.unpack('!HHHHHH', header)
 
     if ((flags % 16) == 1):
-        print("Corrupt Message")
+        print("Corrupt Message", file=open('iter.txt', 'a+'))
+        print('Corrupt Message', file=open('tmp.txt', 'a+'))
         exit(1)
 
     index = 12
@@ -243,7 +239,8 @@ def decodeMes(message):
 
         # If the answer received is a CNAME, exit
         if nameServType == CNAME:
-            print("CNAME found")
+            print("CNAME found", file=open('iter.txt', 'a+'))
+            print("CNAME found", file=open('tmp.txt', 'a+'))
             exit(1)
 
         # If the answer is a Mail Exchange Answer
@@ -251,7 +248,8 @@ def decodeMes(message):
             preference, = struct.unpack('!H', m[index:index+2])
             index+=2
             mail_exchange, index = decodeName(m, index)
-            print(mail_exchange)
+            print(mail_exchange, file=open('iter.txt', 'a+'))
+            print(mail_exchange, file=open('tmp.txt', 'a+'))
             answer_addressList.append(mail_exchange)
             return (answer_addressList, 4)
 
@@ -299,5 +297,3 @@ def decodeMes(message):
 
     elif (NSCount > 0):
         return (nameServerList, 0)
-
-main()

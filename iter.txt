@@ -1,0 +1,18 @@
+Querying server 198.41.0.4
+Querying server 203.119.25.1
+Querying server 202.112.0.35
+Querying server 202.119.64.123
+The name ded.nuaa.edu.cn resolves to: 218.94.136.185
+Querying server 198.41.0.4
+Querying server 203.119.25.1
+Querying server 202.112.0.35
+Querying server 202.119.64.123
+The name ded.nuaa.edu.cn resolves to: 218.94.136.185
+Querying server 198.41.0.4
+connection error
+connection error
+connection error
+Querying server 203.119.27.1
+Querying server 202.112.0.35
+Querying server 202.119.64.123
+The name ded.nuaa.edu.cn resolves to: 218.94.136.185

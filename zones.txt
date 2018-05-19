@@ -14,7 +14,7 @@ example.com  NS      ns1.whatever.com.
 example.com  NS      ns2.whatever.com.
 example.com  TXT     hello this is some text
 example.com  SOA     ["ns1.example.com", "dns.example.com"]
-
+testing.com  A       3.3.3.3
 
 # because the next record exceeds 255 in length dnserver will automatically
 # split it into a multipart record, the new lines here have no effect on that

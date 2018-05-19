@@ -171,7 +171,31 @@ def index():
     if request.method == 'GET' and 'site' in request.values and 'type' in request.values:
         query_domain = request.values.get('site')
         query_type = request.values.get('type').upper()
-        address = '0.0.0.0'
+        query_mode = request.values.get('mode')
+        show_history = request.values.get('history')
+        if show_history == 'true':
+            f = open('%s.txt' % query_mode, 'r')
+            result = list()
+            for line in f.readlines():
+                line = line.strip()
+                if not len(line) or line.startswith('#'):  # 判断是否是空行或注释行
+                    continue
+                result.append(line)
+            lines = result
+            return render_template('index.html', lines=lines)
+        if query_mode == 'iter':
+            open('tmp.txt', 'w').close()
+            import iterative
+            iterative.iter_query(query_domain)
+            f = open('tmp.txt', 'r')
+            result = list()
+            for line in f.readlines():
+                line = line.strip()
+                if not len(line) or line.startswith('#'):  # 判断是否是空行或注释行
+                    continue
+                result.append(line)
+            return render_template('index.html', result=result)
+        address = '127.0.0.1'
         port = 5053
         from dnslib.bimap import Bimap
         QTYPE = Bimap('QTYPE',
@@ -196,10 +220,12 @@ def index():
         out = pattern.findall(out)
         if out:
             lines = out[0].splitlines()
-            return render_template('output.html', lines=lines)
+            for line in lines:
+                print(line, file=open('recur.txt', 'a+'))
+            return render_template('index.html', lines=lines)
         else:
             not_found = ['No answer section']
-            return render_template('output.html', lines=not_found)
+            return render_template('index.html', lines=not_found)
     return render_template('index.html')
 
 
@@ -216,7 +242,7 @@ if __name__ == '__main__':
     logger.info('starting DNS server on port %d, upstream DNS server "%s"', port, upstream)
     udp_server.start_thread()
     tcp_server.start_thread()
-    app.run(debug=True, use_reloader=False, host='0.0.0.0')
+    app.run(debug=True, use_reloader=False, host='127.0.0.1')
     # try:
     #     while udp_server.isAlive():
     #         sleep(1)
