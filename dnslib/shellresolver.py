@@ -2,10 +2,7 @@
 
 from __future__ import print_function
 
-try:
-    from subprocess import getoutput
-except ImportError:
-    from commands import getoutput
+from subprocess import getoutput
 
 from dnslib import RR,QTYPE,RCODE,TXT,parse_time
 from dnslib.label import DNSLabel

@@ -13,19 +13,16 @@
 
 from __future__ import print_function
 
-try:
-    from subprocess import getoutput
-except ImportError:
-    from commands import getoutput
+from subprocess import getoutput
 
-import binascii,code,pprint
+import binascii,code
 
 from dnslib.dns import DNSRecord,DNSHeader,DNSQuestion,QTYPE
 from dnslib.digparser import DigParser
 
 if __name__ == '__main__':
 
-    import argparse,sys,time
+    import argparse
 
     p = argparse.ArgumentParser(description="DNS Client")
     p.add_argument("--server","-s",default="8.8.8.8",

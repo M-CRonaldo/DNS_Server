@@ -3,17 +3,14 @@ import re
 import json
 import signal
 import logging
-import subprocess
-
 from copy import copy
 from pathlib import Path
 from textwrap import wrap
 from datetime import datetime
-
 from dnslib.server import DNSServer
 from dnslib.proxy import ProxyResolver
 from dnslib import DNSLabel, QTYPE, RR, dns
-from dnslib import DNSRecord, DNSQuestion
+from dnslib.dns import DNSRecord, DNSQuestion
 from flask import Flask, request, render_template
 
 
