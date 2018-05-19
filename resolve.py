@@ -16,7 +16,7 @@ FORMATS = (("CNAME", "{alias} is an alias for {name}"),
            ("AAAA", "{name} has IPv6 address {address}"),
            ("MX", "{name} mail is handled by {preference} {exchange}"))
 
-ip = "198.41.0.4"
+ip = "192.36.148.17"   # f.root-servers.org
 ccname = ""
 
 # current as of 23 February 2017
@@ -124,6 +124,7 @@ def lookupfinally(target_name: dns.name.Name,
 
     outbound_query = dns.message.make_query(target_name, qtype)
     response = dns.query.udp(outbound_query, ip, 3)
+    print('发送查询请求至: %s, 得到回答: %s' % (ip, response.answer))
     return response
 
 
@@ -132,6 +133,7 @@ def lookup1(target_name: dns.name.Name,
 
     outbound_query = dns.message.make_query(target_name, qtype)
     response = dns.query.udp(outbound_query, ip, 3)
+    print('发送查询请求至: %s, 得到回答: %s' % (ip, response.answer))
     return response
 
 
@@ -140,50 +142,63 @@ def lookup(target_name: dns.name.Name,
 
     outbound_query = dns.message.make_query(target_name, qtype)
     response = dns.query.udp(outbound_query, ip, 3)
-
-    if (len(response.answer) > 0):
+    if len(response.answer) > 0:
+        print('发送查询请求至: %s, 得到answer: %s' % (ip, response.answer))
         return response
-    elif (len(response.additional) > 0):
+    elif len(response.additional) > 0:
+        print('发送查询请求至: %s, 得到additional: %s' % (ip, response.additional))
         for addis in response.additional:
-            a_name = addis.name
+            # a_name = addis.name
             for addi in addis:
                 if addi.rdtype == 1:
                     response = lookup1(target_name, dns.rdatatype.A, str(addi))
+                    print(response)
                     if (len(response.answer) > 0):
+                        # print(str(addi))
                         response = lookupfinally(target_name, qtype, str(addi))
+                        print(response)
                         return response
                     elif(len(response.additional) > 0):
                         for addis1 in response.additional:
-                            a_name = addis1.name
+                            # a_name = addis1.name
                             for addi1 in addis1:
                                 if addi1.rdtype == 1:
-                                    response = lookup1(
-                                        target_name, dns.rdatatype.A, str(addi1))
+                                    print(str(addi1))
+                                    response = lookup1(target_name, dns.rdatatype.A, str(addi1))
+                                    print(response)
                                     if (len(response.answer) > 0):
-                                        response = lookupfinally(
-                                            target_name, qtype, str(addi1))
+                                        print(str(addi1))
+                                        response = lookupfinally(target_name, qtype, str(addi1))
+                                        print(response)
                                         return response
                                     elif(len(response.additional) > 0):
                                         for addis2 in response.additional:
-                                            a_name = addis2.name
+                                            # a_name = addis2.name
                                             for addi2 in addis2:
                                                 if addi2.rdtype == 1:
-                                                    response = lookup1(
-                                                        target_name, dns.rdatatype.A, str(addi2))
+                                                    # print(str(addi2))
+                                                    response = lookup1(target_name, dns.rdatatype.A, str(addi2))
+                                                    print(response)
                                                     if (len(response.answer) > 0):
+                                                        print(str(addi2))
                                                         response = lookupfinally(
                                                             target_name, qtype, str(addi2))
+                                                        print(response)
                                                         return response
                                                     elif(len(response.additional) > 0):
                                                         for addis3 in response.additional:
-                                                            a_name = addis3.name
+                                                            # a_name = addis3.name
                                                             for addi3 in addis3:
                                                                 if addi3.rdtype == 1:
+                                                                    print(str(addi3))
                                                                     response = lookup1(
                                                                         target_name, dns.rdatatype.A, str(addi3))
+                                                                    print(response)
                                                                     if (len(response.answer) > 0):
+                                                                        print(str(addi3))
                                                                         response = lookupfinally(
                                                                             target_name, qtype, str(addi3))
+                                                                        print(response)
                                                                         return response
     # print(response)
     return response
