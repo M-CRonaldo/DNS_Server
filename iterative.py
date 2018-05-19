@@ -11,6 +11,20 @@ import struct
 import socket
 import sys
 
+ROOT_SERVERS = ("198.41.0.4",
+                "192.228.79.201",
+                "192.33.4.12",
+                "199.7.91.13",
+                "192.203.230.10",
+                "192.5.5.241",
+                "192.112.36.4",
+                "198.97.190.53",
+                "192.36.148.17",
+                "192.58.128.30",
+                "193.0.14.129",
+                "199.7.83.42",
+                "202.12.27.33")
+
 def main():
     # Get command line arguments
     args = sys.argv[1:]
@@ -41,7 +55,7 @@ def main():
     # Send the query
     ip_address = sendReceive(sock, port, query, root_servers, root_servers)
 
-    print "The name", ip_req, "resolves to:",ip_address
+    print("The name", ip_req, "resolves to:",ip_address)
 
 def sendReceive(s, port_num, question, server_list, root_servers):
     """
@@ -62,7 +76,7 @@ def sendReceive(s, port_num, question, server_list, root_servers):
         try:
             DNS_IP = ip_address
             sock.sendto(query, (DNS_IP, port))
-            print "Querying server", ip_address
+            print("Querying server", ip_address)
             message = sock.recvfrom(1024)
             new_server_list, flag = decodeMes(message)
 
@@ -78,7 +92,7 @@ def sendReceive(s, port_num, question, server_list, root_servers):
                 return sendReceive(sock, port, query, new_server_list, root_servers)
 
             elif flag == 3:
-                print "SOA: No such domain name"
+                print("SOA: No such domain name")
                 exit(1)
 
             elif flag == 4:
@@ -100,7 +114,7 @@ def sendReceive(s, port_num, question, server_list, root_servers):
                 return sendReceive(sock, port, query, new_server_list2, root_servers)
 
         except socket.timeout as e:
-            print 'Exception:', e
+            print('Exception:', e)
         except socket.gaierror:
             pass
 
@@ -122,7 +136,7 @@ def makeQuery(specs):
 
     # Create the question and add it to the header
     for string in mylist:
-        query = struct.pack("!b"+str(len(string))+"s", len(string), string)
+        query = struct.pack("!b"+str(len(string))+"s", len(string), string.encode('utf-8'))
         message = message + query
 
     # If the query is Type-A otherwise it is Type-MX
@@ -142,7 +156,9 @@ def decodeName(message, index):
         return: a tuple, where the first index is the name and the second index
                         is the current index in the DNS message
     """
-    count, = struct.unpack("!B", message[index]);
+    print(type(message[index]))
+    print(message[index])
+    count, = struct.unpack("!B", b'\x03')
     index+=1
 
     if ((count & 0xc0) == 192):
@@ -156,7 +172,7 @@ def decodeName(message, index):
         name = ""
         while count != 0:
             for i in range(count):
-                temp_tup = struct.unpack('!s', message[index])
+                temp_tup = struct.unpack('!s', str(message[index]).encode('utf-8'))
                 temp = temp_tup[0]
                 name = name + temp
                 index+=1
@@ -197,7 +213,7 @@ def decodeMes(message):
     hid, flags, QDCount, ANCount, NSCount, ARCount = struct.unpack('!HHHHHH', header)
 
     if ((flags % 16) == 1):
-        print "Corrupt Message"
+        print("Corrupt Message")
         exit(1)
 
     index = 12
@@ -227,7 +243,7 @@ def decodeMes(message):
 
         # If the answer received is a CNAME, exit
         if nameServType == CNAME:
-            print "CNAME found"
+            print("CNAME found")
             exit(1)
 
         # If the answer is a Mail Exchange Answer
@@ -235,7 +251,7 @@ def decodeMes(message):
             preference, = struct.unpack('!H', m[index:index+2])
             index+=2
             mail_exchange, index = decodeName(m, index)
-            print mail_exchange
+            print(mail_exchange)
             answer_addressList.append(mail_exchange)
             return (answer_addressList, 4)
 
